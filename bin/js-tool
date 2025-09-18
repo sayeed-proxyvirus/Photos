@@ -1,0 +1,220 @@
+#!/usr/bin/env node
+
+const fs = require('fs');
+const path = require('path');
+const { execSync } = require('child_process');
+
+// ANSI color codes for better output
+const colors = {
+    reset: '\x1b[0m',
+    bright: '\x1b[1m',
+    red: '\x1b[31m',
+    green: '\x1b[32m',
+    yellow: '\x1b[33m',
+    blue: '\x1b[34m',
+    magenta: '\x1b[35m',
+    cyan: '\x1b[36m'
+};
+
+// Helper function to print colored output
+function colorPrint(text, color = 'reset') {
+    console.log(colors[color] + text + colors.reset);
+}
+
+// Display help information
+function showHelp() {
+    colorPrint('\n🚀 JavaScript Binary Tool', 'cyan');
+    colorPrint('================================', 'cyan');
+    console.log('\nA simple command-line utility written in JavaScript\n');
+    
+    colorPrint('Usage:', 'yellow');
+    console.log('  js-tool [command] [options]\n');
+    
+    colorPrint('Commands:', 'yellow');
+    console.log('  help, -h, --help     Show this help message');
+    console.log('  version, -v, --version  Show version information');
+    console.log('  info                 Show system information');
+    console.log('  time                 Show current date and time');
+    console.log('  files [directory]    List files in directory (default: current)');
+    console.log('  greet [name]         Greet someone (default: World)');
+    console.log('  calc [expression]    Simple calculator (e.g., "2+2", "10*5")');
+    
+    colorPrint('\nExamples:', 'green');
+    console.log('  js-tool greet Alice');
+    console.log('  js-tool calc "15 * 3"');
+    console.log('  js-tool files /home');
+    console.log('  js-tool info\n');
+}
+
+// Show version information
+function showVersion() {
+    const packagePath = path.join(__dirname, '..', 'package.json');
+    try {
+        const packageData = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
+        colorPrint(`\n📦 ${packageData.name} v${packageData.version}`, 'green');
+        colorPrint(`Node.js ${process.version}`, 'blue');
+        console.log();
+    } catch (error) {
+        colorPrint('Version information not available', 'red');
+    }
+}
+
+// Show system information
+function showInfo() {
+    colorPrint('\n💻 System Information', 'cyan');
+    colorPrint('=====================', 'cyan');
+    console.log(`Platform: ${process.platform}`);
+    console.log(`Architecture: ${process.arch}`);
+    console.log(`Node.js Version: ${process.version}`);
+    console.log(`Current Directory: ${process.cwd()}`);
+    console.log(`Process ID: ${process.pid}`);
+    console.log(`Uptime: ${Math.floor(process.uptime())} seconds`);
+    
+    // Memory usage
+    const memUsage = process.memoryUsage();
+    console.log(`Memory Usage:`);
+    console.log(`  RSS: ${Math.round(memUsage.rss / 1024 / 1024 * 100) / 100} MB`);
+    console.log(`  Heap Used: ${Math.round(memUsage.heapUsed / 1024 / 1024 * 100) / 100} MB`);
+    console.log(`  Heap Total: ${Math.round(memUsage.heapTotal / 1024 / 1024 * 100) / 100} MB`);
+    console.log();
+}
+
+// Show current time
+function showTime() {
+    const now = new Date();
+    colorPrint('\n🕐 Current Date & Time', 'magenta');
+    colorPrint('======================', 'magenta');
+    console.log(`Local Time: ${now.toLocaleString()}`);
+    console.log(`UTC Time: ${now.toUTCString()}`);
+    console.log(`ISO String: ${now.toISOString()}`);
+    console.log(`Timestamp: ${now.getTime()}`);
+    console.log();
+}
+
+// List files in directory
+function listFiles(directory = '.') {
+    try {
+        const targetDir = path.resolve(directory);
+        colorPrint(`\n📁 Files in: ${targetDir}`, 'blue');
+        colorPrint('='.repeat(20 + targetDir.length), 'blue');
+        
+        const items = fs.readdirSync(targetDir, { withFileTypes: true });
+        
+        if (items.length === 0) {
+            console.log('(empty directory)');
+        } else {
+            items.forEach(item => {
+                const icon = item.isDirectory() ? '📁' : '📄';
+                const name = item.isDirectory() ? colors.blue + item.name + colors.reset : item.name;
+                console.log(`${icon} ${name}`);
+            });
+        }
+        console.log();
+    } catch (error) {
+        colorPrint(`❌ Error reading directory: ${error.message}`, 'red');
+    }
+}
+
+// Greet function
+function greet(name = 'World') {
+    colorPrint(`\n👋 Hello, ${name}!`, 'green');
+    colorPrint(`Welcome to the JavaScript Binary Tool!`, 'green');
+    console.log();
+}
+
+// Simple calculator
+function calculate(expression) {
+    try {
+        // Basic security: only allow numbers, operators, parentheses, and spaces
+        if (!/^[\d+\-*/().\s]+$/.test(expression)) {
+            throw new Error('Invalid characters in expression');
+        }
+        
+        const result = eval(expression);
+        colorPrint(`\n🧮 Calculator`, 'yellow');
+        colorPrint('============', 'yellow');
+        console.log(`Expression: ${expression}`);
+        console.log(`Result: ${result}`);
+        console.log();
+    } catch (error) {
+        colorPrint(`❌ Calculation error: ${error.message}`, 'red');
+    }
+}
+
+// Main function to handle command line arguments
+function main() {
+    const args = process.argv.slice(2);
+    
+    if (args.length === 0) {
+        showHelp();
+        return;
+    }
+    
+    const command = args[0].toLowerCase();
+    
+    switch (command) {
+        case 'help':
+        case '-h':
+        case '--help':
+            showHelp();
+            break;
+            
+        case 'version':
+        case '-v':
+        case '--version':
+            showVersion();
+            break;
+            
+        case 'info':
+            showInfo();
+            break;
+            
+        case 'time':
+            showTime();
+            break;
+            
+        case 'files':
+            listFiles(args[1]);
+            break;
+            
+        case 'greet':
+            greet(args[1]);
+            break;
+            
+        case 'calc':
+        case 'calculate':
+            if (args[1]) {
+                calculate(args[1]);
+            } else {
+                colorPrint('❌ Please provide an expression to calculate', 'red');
+                console.log('Example: js-tool calc "2 + 2"');
+            }
+            break;
+            
+        default:
+            colorPrint(`❌ Unknown command: ${command}`, 'red');
+            console.log('Use "js-tool help" to see available commands');
+            process.exit(1);
+    }
+}
+
+// Handle uncaught exceptions gracefully
+process.on('uncaughtException', (error) => {
+    colorPrint(`❌ Unexpected error: ${error.message}`, 'red');
+    process.exit(1);
+});
+
+// Run the main function
+if (require.main === module) {
+    main();
+}
+
+module.exports = {
+    showHelp,
+    showVersion,
+    showInfo,
+    showTime,
+    listFiles,
+    greet,
+    calculate
+};

@@ -1,0 +1,19 @@
+{
+  "name": "js-binary-tool",
+  "version": "1.0.0",
+  "description": "A JavaScript binary command-line tool",
+  "main": "index.js",
+  "bin": {
+    "js-tool": "./bin/js-tool"
+  },
+  "scripts": {
+    "start": "node bin/js-tool",
+    "test": "node bin/js-tool --help"
+  },
+  "keywords": ["cli", "binary", "javascript", "tool"],
+  "author": "Developer",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
